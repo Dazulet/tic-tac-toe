@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Крестики-нолики</title>
+  <style>
+
+    body {
+      font-family: 'Arial';
+      background-color: rgb(52 152 219 / 60%);
+      text-align: center;
+    }
+
+    h1 {
+     
+      font-size: 3rem;
+      margin-top: 20px;
+    
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin: 30px auto;
+      max-width: 340px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #3498db;
+      background-color: #ecf0f1;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 10px;
+    }
+
+    .cell.taken {
+      cursor: not-allowed;
+          }
+
+    .cell.X {
+      background-color: #003366;
+      color: white;
+    }
+
+    .cell.O {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    .cell:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(52, 152, 219, 0.6);
+    }
+
+    .scoreboard, .mode-selector {
+      font-size: 1.5rem;
+      margin: 10px 0;
+      color: #34495e;
+    }
+
+    .button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .button:hover {
+      background-color: #2980b9;
+    }
+
+    .button:active {
+      background-color: #1abc9c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Крестики-нолики</h1>
+  <div class="mode-selector">
+    Выберите режим: 
+    <button class="button" onclick="setMode('bot')">Игра с ботом</button>
+    <button class="button" onclick="setMode('friend')">Игра с другом</button>
+  </div>
+  <div class="scoreboard">
+    Игрок 1 (Yerassyl): <span id="scoreYerassyl">0</span> |
+    Ничья: <span id="scoreDraws">0</span>| 
+    Игрок 2 (Daulet/Bot): <span id="scoreDaulet">0</span> 
+    
+  </div>
+  <div class="board" id="board"></div>
+  <button class="button" id="reset">Перезапуск</button>
+
+  <script>
+    const board = document.getElementById("board");
+    const resetButton = document.getElementById("reset");
+    const scoreYerassyl = document.getElementById("scoreYerassyl");
+    const scoreDaulet = document.getElementById("scoreDaulet");
+    const scoreDraws = document.getElementById("scoreDraws");
+
+    let currentPlayer = "X";
+    let scores = { X: 0, O: 0, Draws: 0 };
+    let gameState = Array(9).fill(null);
+    let mode = "friend"; 
+
+    
+    function setMode(selectedMode) {
+      mode = selectedMode;
+      resetGame();
+    }
+
+    
+    function renderBoard() {
+      board.innerHTML = "";
+      gameState.forEach((cell, index) => {
+        const cellElement = document.createElement("div");
+        cellElement.classList.add("cell");
+        if (cell) {
+          cellElement.classList.add("taken");
+          cellElement.classList.add(cell);
+        }
+        cellElement.textContent = cell || "";
+        cellElement.addEventListener("click", () => makeMove(index));
+        board.appendChild(cellElement);
+      });
+    }
+
+    function checkWinner() {
+      const winningCombos = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+      for (const combo of winningCombos) {
+        const [a, b, c] = combo;
+        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+          return gameState[a];
+        }
+      }
+      return gameState.includes(null) ? null : "Draw";
+    }
+
+    function makeMove(index) {
+      if (gameState[index] || checkWinner()) return;
+
+      gameState[index] = currentPlayer;
+      const winner = checkWinner();
+
+      if (winner) {
+        if (winner === "Draw") {
+          scores.Draws++;
+          alert("Ничья!");
+        } else {
+          scores[winner]++;
+          alert((winner === "X" ? "Yerassyl" : "Daulet") + " выиграл!");
+        }
+        updateScores();
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      renderBoard();
+
+      if (mode === "bot" && currentPlayer === "O") {
+        botMove();
+      }
+    }
+
+
+    function botMove() {
+      const emptyCells = gameState
+        .map((cell, index) => (cell === null ? index : null))
+        .filter(index => index !== null);
+
+      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      makeMove(randomIndex);
+    }
+
+  
+    function updateScores() {
+      scoreYerassyl.textContent = scores.X;
+      scoreDaulet.textContent = scores.O;
+      scoreDraws.textContent = scores.Draws;
+    }
+
+    function resetGame() {
+      gameState = Array(9).fill(null);
+      currentPlayer = "X";
+      renderBoard();
+    }
+
+    resetButton.addEventListener("click", resetGame);
+
+    renderBoard();
+  </script>
+</body>
+</html>
